@@ -1,0 +1,89 @@
+from dronekit import connect, VehicleMode
+from pymavlink import mavutil
+import time
+
+# Pixhawk'a bağlanma
+connection_string = 'COM10'  # Bağlantı portunuza göre değiştirin
+baud_rate = 9600
+
+print("Bağlanıyor...")
+vehicle = connect(connection_string, baud=baud_rate, wait_ready=True)
+
+# Aracın hazır olduğunu kontrol et
+while not vehicle.is_armable:
+    print("Araç hazır değil, bekleniyor...")
+    time.sleep(1)
+
+print("Araç hazır")
+
+# Aracı stabilize moduna al
+vehicle.mode = VehicleMode("STABILIZE")
+while not vehicle.mode.name == 'STABILIZE':
+    print("Mod değiştiriliyor...")
+    time.sleep(1)
+
+print("STABILIZE modunda")
+
+# Aracı arm etmek
+vehicle.armed = True
+while not vehicle.armed:
+    print("Arm bekleniyor...")
+    time.sleep(1)
+
+print("Araç armed")
+
+# Hareket komutu gönderme fonksiyonu
+def set_motor_speeds(dikey_speeds, yatay_speeds):
+    """
+    Motor hızlarını ayarlayan fonksiyon.
+    dikey_speeds: Dikey motorlar için hız değerleri içeren liste.
+    yatay_speeds: Yatay motorlar için hız değerleri içeren liste.
+    """
+    # Dikey motorların hızlarını ayarla (motor 1, 2, 3, 4)
+    for i in range(4):
+        vehicle.channels.overrides['{}'.format(i + 1)] = dikey_speeds[i]
+
+    # Yatay motorların hızlarını ayarla (motor 5, 6)
+    for i in range(2):
+        vehicle.channels.overrides['{}'.format(i + 5)] = yatay_speeds[i]
+
+# İleri hareket
+print("İleri hareket")
+set_motor_speeds([1500, 1500, 1500, 1500], [1600, 1600])  # Yatay motorlar ileri
+time.sleep(5)
+
+# Geri hareket
+print("Geri hareket")
+set_motor_speeds([1500, 1500, 1500, 1500], [1400, 1400])  # Yatay motorlar geri
+time.sleep(5)
+
+# Sola hareket
+print("Sola hareket")
+set_motor_speeds([1500, 1500, 1500, 1500], [1400, 1600])  # Yatay motorlar sola
+time.sleep(5)
+
+# Sağa hareket
+print("Sağa hareket")
+set_motor_speeds([1500, 1500, 1500, 1500], [1600, 1400])  # Yatay motorlar sağa
+time.sleep(5)
+
+# Yukarı hareket
+print("Yukarı hareket")
+set_motor_speeds([1600, 1600, 1600, 1600], [1500, 1500])  # Dikey motorlar yukarı
+time.sleep(5)
+
+# Aşağı hareket
+print("Aşağı hareket")
+set_motor_speeds([1400, 1400, 1400, 1400], [1500, 1500])  # Dikey motorlar aşağı
+time.sleep(5)
+
+# Aracı disarm etmek
+vehicle.armed = False
+while vehicle.armed:
+    print("Disarm bekleniyor...")
+    time.sleep(1)
+
+print("Araç disarmed")
+
+# Bağlantıyı kapat
+vehicle.close()
